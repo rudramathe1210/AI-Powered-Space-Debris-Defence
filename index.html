@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Orbit Monitor — OrbitShield | AI Space Debris Decision Support</title>
+  <meta name="description" content="Operational orbital tracking layers, dynamic safety corridors, Keplerian simulation, and simulated assessment timelines.">
+  
+  <!-- Modern Space Typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Base & Enhanced Theme Styles -->
+  <link rel="stylesheet" href="assets/styles.css">
+  <link rel="stylesheet" href="assets/app.css">
+</head>
+<body>
+
+  <!-- Top Global Mission Navigation Bar -->
+  <header class="app-header">
+    <div class="brand-section">
+      <div class="brand-logo-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"></circle>
+          <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"></path>
+          <path d="M2 12h20"></path>
+        </svg>
+      </div>
+      <div class="brand-title">
+        <span>OrbitShield</span>
+        <span class="brand-subtitle">Mission Decision Support</span>
+      </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <nav class="nav-links">
+      <button class="nav-btn active" data-view="orbitMonitorView" id="tabOrbitMonitor">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M3 12h3m12 0h3M12 3v3m0 12v3"></path></svg>
+        Orbit Monitor
+      </button>
+      <button class="nav-btn" data-view="overviewView" id="tabOverview">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+        Mission Overview
+      </button>
+      <button class="nav-btn" data-view="forecastView" id="tabForecast">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m19 5-7 7-7-7"></path><path d="m19 12-7 7-7-7"></path></svg>
+        Collision Forecast
+      </button>
+      <button class="nav-btn" data-view="catalogView" id="tabCatalog">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"></path></svg>
+        Debris Catalog
+      </button>
+      <button class="nav-btn" data-view="riskView" id="tabRisk">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+        AI Risk Assessment
+      </button>
+      <button class="nav-btn" data-view="plannerView" id="tabPlanner">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 19 21 12 17 5 21 12 2"></polygon></svg>
+        Maneuver Planner
+      </button>
+      <button class="nav-btn" data-view="reportView" id="tabReport">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+        Mission Report
+      </button>
+    </nav>
+
+    <!-- Global Target & Simulation Actions -->
+    <div class="header-controls">
+      <select class="sat-selector" id="satSelect" title="Select target satellite">
+        <option value="AURORA-7">AURORA-7 (550 km · 97.6°)</option>
+        <option value="ORION-2">ORION-2 (575 km · 98.2°)</option>
+        <option value="NOVA-4">NOVA-4 (590 km · 96.8°)</option>
+      </select>
+
+      <button class="action-btn danger-action" id="highRiskBtn" title="Load High-Risk conjunction demo">
+        ⚡ High-Risk Demo
+      </button>
+      <button class="action-btn" id="injectRiskBtn" title="Perturb orbit with emergency close approach">
+        🎲 Inject Risk
+      </button>
+      <button class="action-btn" id="resetBtn" title="Reset all simulation parameters">
+        ↺ Reset
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="main-container">
+
+    <!-- VIEW 1: ORBIT MONITOR (Primary Simulation View) -->
+    <section id="orbitMonitorView" class="page-view">
+
+      <!-- Simulation Status & Live Playback Control Bar -->
+      <div class="sim-status-bar">
+        <div class="status-indicator">
+          <span class="pulse-dot" id="statusPulse"></span>
+          <span id="statusText">Simulated tracking layer active</span>
+        </div>
+
+        <div class="sim-controls-group">
+          <!-- Play / Pause Button -->
+          <button class="sim-btn" id="playPauseBtn" title="Play / Pause Simulation Loop">
+            <span id="playPauseIcon">⏸</span>
+            <span id="playPauseText">Pause</span>
+          </button>
+
+          <!-- Simulation Speed Selectors -->
+          <div class="speed-selector" title="Simulation Speed Multiplier">
+            <button class="speed-opt active" data-speed="1">1x</button>
+            <button class="speed-opt" data-speed="5">5x</button>
+            <button class="speed-opt" data-speed="30">30x</button>
+            <button class="speed-opt" data-speed="120">120x</button>
+            <button class="speed-opt" data-speed="600">600x</button>
+          </div>
+
+          <!-- Time Scrub Slider -->
+          <div class="time-scrubber-container" title="Scrub simulation time relative to Time of Closest Approach (TCA)">
+            <span>Timeline</span>
+            <input type="range" class="time-slider" id="timeSlider" min="0" max="100" value="50">
+            <span id="timeDisplay">TCA -02h 18m 00s</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Two-Column Grid: Simulation Canvas & Monitoring Details -->
+      <div class="monitor-grid">
+
+        <!-- Column 1: Orbital Simulation Interactive Canvas -->
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polygon points="12 8 8 12 12 16 16 12 12 8"></polygon></svg>
+              Orbit Monitor — Tactical Simulation
+            </div>
+            <div class="panel-meta live-badge">60 FPS RUNNING</div>
+          </div>
+
+          <div class="orbital-map-container">
+            <!-- Main Canvas -->
+            <canvas id="simulationCanvas"></canvas>
+
+            <!-- HUD Top Left -->
+            <div class="hud-corner top-left">
+              LEO / EARTH-CENTERED<br>
+              <span style="color: #fff; font-weight: 600;">ACTIVE ORBITAL MECHANICS ENGINE</span>
+            </div>
+
+            <!-- HUD Top Right: Live Conjunction Telemetry Box -->
+            <div class="canvas-live-telemetry">
+              <div class="telemetry-row">
+                <span class="telemetry-label">CURRENT DISTANCE:</span>
+                <span class="telemetry-value critical" id="liveDistance">842 m</span>
+              </div>
+              <div class="telemetry-row">
+                <span class="telemetry-label">TIME TO CLOSEST (TCA):</span>
+                <span class="telemetry-value" id="liveTca">02h 18m 00s</span>
+              </div>
+              <div class="telemetry-row">
+                <span class="telemetry-label">CORRIDOR STATUS:</span>
+                <span class="telemetry-value safe" id="hudStatus">NOMINAL (CLEAR)</span>
+              </div>
+            </div>
+
+            <!-- HUD Bottom Left: Color Coded Legend -->
+            <div class="hud-corner bottom-left">
+              <div class="legend-item"><span class="legend-dot sat-orbit"></span> Satellite Orbit</div>
+              <div class="legend-item"><span class="legend-dot deb-orbit"></span> Debris Trajectory</div>
+              <div class="legend-item"><span class="legend-dot corridor"></span> 2 km Safety Corridor</div>
+              <div class="legend-item"><span class="legend-dot debris"></span> Tracked Objects (50+)</div>
+            </div>
+
+            <!-- HUD Bottom Right: Floating View Controls -->
+            <div class="canvas-floating-controls">
+              <button class="floating-btn" id="zoomInBtn" title="Zoom In">+</button>
+              <button class="floating-btn" id="zoomOutBtn" title="Zoom Out">−</button>
+              <button class="floating-btn" id="resetViewBtn" title="Center View">🎯</button>
+              <button class="floating-btn active" id="toggleCorridorBtn" title="Toggle Safety Corridor">🛡</button>
+              <button class="floating-btn" id="toggle3dBtn" title="Toggle 3D Spherical Mode">3D</button>
+            </div>
+          </div>
+
+          <!-- Maneuver Callout Box -->
+          <div class="maneuver-callout" id="maneuverCallout">
+            <div class="maneuver-info">
+              <div class="maneuver-icon">🚀</div>
+              <div class="maneuver-text">
+                <strong id="maneuverTitle">Along-Track Posigrade Burn Suggested (+1.2 m/s)</strong>
+                <span id="maneuverSubtitle">Predicted minimum miss clearance will increase from 842 m to &gt; 4,500 m.</span>
+              </div>
+            </div>
+            <button class="execute-burn-btn" id="executeBurnBtn">
+              <span>⚡</span> Execute Simulated Burn
+            </button>
+          </div>
+        </div>
+
+        <!-- Column 2: Monitoring Telemetry & Live Assessment Timeline -->
+        <div class="sidebar-panel">
+
+          <!-- Telemetry Status Panel -->
+          <div class="panel">
+            <div class="panel-header">
+              <div class="panel-title">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"></path></svg>
+                Telemetry & Orbit Parameters
+              </div>
+              <div class="panel-meta">SIMULATED</div>
+            </div>
+
+            <dl class="data-dl">
+              <div class="data-item">
+                <dt class="data-dt">Altitude</dt>
+                <dd class="data-dd" id="satAltitude">550 km</dd>
+              </div>
+              <div class="data-item">
+                <dt class="data-dt">Inclination</dt>
+                <dd class="data-dd" id="satInclination">97.6°</dd>
+              </div>
+              <div class="data-item">
+                <dt class="data-dt">Fuel Reserve</dt>
+                <dd class="data-dd" id="satFuel">86.4%</dd>
+              </div>
+              <div class="data-item">
+                <dt class="data-dt">Safety Envelope</dt>
+                <dd class="data-dd" style="color: #34d399;">± 2.0 km</dd>
+              </div>
+              <div class="data-item">
+                <dt class="data-dt">Active Debris</dt>
+                <dd class="data-dd" id="activeDebrisId" style="color: #f59e0b;">DEB-7750</dd>
+              </div>
+              <div class="data-item">
+                <dt class="data-dt">Relative Velocity</dt>
+                <dd class="data-dd">7.8 km/s</dd>
+              </div>
+            </dl>
+          </div>
+
+          <!-- Assessment Timeline Panel -->
+          <div class="panel">
+            <div class="panel-header">
+              <div class="panel-title">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                Assessment Timeline
+              </div>
+              <div class="panel-meta">LIVE LOGS</div>
+            </div>
+
+            <ol class="timeline-list" id="timelineList">
+              <!-- Dynamically populated by app.js -->
+            </ol>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- AI Flight Dynamics Copilot & Autonomous Maneuver Assistant -->
+      <div class="ai-copilot-panel" id="aiCopilotPanel">
+        <div class="ai-header">
+          <div class="ai-header-left">
+            <div class="ai-avatar-badge">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2"><path d="M12 2a8 8 0 0 0-8 8c0 3.3 2 6.2 5 7.4V20a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2v-2.6c3-1.2 5-4.1 5-7.4a8 8 0 0 0-8-8z"></path><line x1="9" y1="9" x2="9.01" y2="9"></line><line x1="15" y1="9" x2="15.01" y2="9"></line></svg>
+            </div>
+            <div class="ai-title-group">
+              <h3>
+                OrbitShield AI Mission Copilot
+                <span class="ai-model-tag">Gemini 2.5 Flash Connected</span>
+              </h3>
+            </div>
+          </div>
+          <div class="ai-header-status">
+            <span class="pulse-dot"></span>
+            <span>AUTONOMOUS FDO ENGINE ONLINE</span>
+          </div>
+        </div>
+
+        <!-- 3 Tactical AI Action Buttons -->
+        <div class="ai-quick-actions-bar">
+          <button class="ai-action-btn primary-ai" id="btnAiSituation" title="Analyze and report current satellite telemetry, orbit, and proximity">
+            <div class="ai-btn-icon">🛰️</div>
+            <div class="ai-btn-text">
+              <strong>Calculate Satellite Situation</strong>
+              <span>Live orbit status & proximity alert</span>
+            </div>
+          </button>
+
+          <button class="ai-action-btn danger-ai" id="btnAiImpact" title="Compute kinetic energy release, fragmentation, and Kessler cascade risk">
+            <div class="ai-btn-icon">💥</div>
+            <div class="ai-btn-text">
+              <strong>Calculate Collision Impact</strong>
+              <span>Hypervelocity kinetic energy & loss probability</span>
+            </div>
+          </button>
+
+          <button class="ai-action-btn automate-ai" id="btnAiAutomateManeuver" title="Compute Delta-V, predict outcome clearance, and automate thruster burn">
+            <div class="ai-btn-icon">⚡</div>
+            <div class="ai-btn-text">
+              <strong>AI Automate Path Change</strong>
+              <span>Calculate outcome & execute evasive burn</span>
+            </div>
+          </button>
+        </div>
+
+        <!-- Chat Stream & Interactive Q&A -->
+        <div class="ai-chat-body">
+          <div class="ai-chat-history" id="aiChatHistory">
+            <div class="chat-bubble ai">
+              <div class="chat-avatar">AI</div>
+              <div class="chat-content">
+                <h3>OrbitShield AI Flight Dynamics Officer Initialized</h3>
+                <p>Telemetry link established with <strong>AURORA-7</strong> (550 km SSO). Active collision risk monitoring is operational for approaching hazard <strong>DEB-7750</strong>.</p>
+                <p style="margin-top: 6px;">You can trigger the 3 tactical buttons above for situational assessments, impact calculations, and <strong>autonomous path changes</strong>, or ask any technical mission questions below.</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Prompt Suggestions Chips -->
+          <div class="ai-chips-row">
+            <span class="ai-chip" data-prompt="What is the exact collision probability Pc for the current close approach?">Collision Probability Pc?</span>
+            <span class="ai-chip" data-prompt="Why is a Posigrade along-track burn safer than a radial burn?">Posigrade vs Radial Burn?</span>
+            <span class="ai-chip" data-prompt="What happens if the satellite delays the avoidance maneuver by 30 minutes?">Burn Delay Risk?</span>
+            <span class="ai-chip" data-prompt="How would a collision affect neighboring constellations like Starlink/OneWeb?">Kessler Cascade Risk?</span>
+          </div>
+
+          <!-- Input Bar -->
+          <form class="ai-input-bar" id="aiChatForm">
+            <input type="text" class="ai-input-field" id="aiChatInput" placeholder="Ask OrbitShield AI (e.g. 'Explain Delta-V calculation for DEB-4182', 'What is the fuel penalty?')..." autocomplete="off">
+            <button type="submit" class="ai-send-btn" id="aiSendBtn">
+              <span>Send</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Conjunction Queue (Scenario Selector) -->
+      <div class="scenarios-section">
+        <div class="section-heading">
+          <div class="section-title">Conjunction Queue — Simulated Encounters</div>
+          <span style="font-size: 11px; color: var(--muted-foreground); font-family: var(--font-mono);">4 SIMULATED OBJECTS · SELECT TO INSPECT &amp; SIMULATE</span>
+        </div>
+
+        <div class="cards-grid" id="cardsContainer">
+          <!-- Dynamically populated with scenario cards -->
+        </div>
+      </div>
+
+    </section>
+
+    <!-- VIEW 2: MISSION OVERVIEW -->
+    <section id="overviewView" class="page-view" style="display: none;">
+      <div class="panel" style="padding: 24px; margin-bottom: 20px;">
+        <h2 style="font-size: 18px; margin-bottom: 8px;">Fleet Mission Overview</h2>
+        <p style="color: var(--muted-foreground); margin-bottom: 20px;">Comprehensive constellation status, tracked debris population, and risk posture.</p>
+        
+        <div class="cards-grid" style="margin-bottom: 24px;">
+          <div class="scenario-card">
+            <div class="card-id">ACTIVE ASSETS</div>
+            <div style="font-size: 24px; font-weight: 800; color: var(--primary); margin: 8px 0;">3 Constellation Units</div>
+            <div style="font-size: 11px; color: var(--muted-foreground);">AURORA-7, ORION-2, NOVA-4 operational</div>
+          </div>
+          <div class="scenario-card">
+            <div class="card-id">TRACKED OBJECTS</div>
+            <div style="font-size: 24px; font-weight: 800; color: #fff; margin: 8px 0;">1,248 LEO Objects</div>
+            <div style="font-size: 11px; color: var(--muted-foreground);">Radar Cross Section &gt; 10 cm cataloged</div>
+          </div>
+          <div class="scenario-card critical">
+            <div class="card-id">CRITICAL CONJUNCTIONS</div>
+            <div style="font-size: 24px; font-weight: 800; color: #ef4444; margin: 8px 0;">1 Action Required</div>
+            <div style="font-size: 11px; color: #fca5a5;">DEB-4182 incursion within 284 m</div>
+          </div>
+          <div class="scenario-card">
+            <div class="card-id">AVERAGE FLEET FUEL</div>
+            <div style="font-size: 24px; font-weight: 800; color: #10b981; margin: 8px 0;">84.4% Delta-V</div>
+            <div style="font-size: 11px; color: var(--muted-foreground);">Sufficient for ~14 avoidance maneuvers</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- VIEW 3: COLLISION FORECAST -->
+    <section id="forecastView" class="page-view" style="display: none;">
+      <div class="panel" style="padding: 24px;">
+        <h2 style="font-size: 18px; margin-bottom: 8px;">Collision Risk Forecast</h2>
+        <p style="color: var(--muted-foreground); margin-bottom: 20px;">Probabilistic closest-approach geometry and covariance ellipsoid overlaps.</p>
+        <div style="background: rgba(0,0,0,0.3); border: 1px solid var(--border); border-radius: 8px; padding: 20px; font-family: var(--font-mono);">
+          <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+            <span>ENCOUNTER ID</span>
+            <span>MISS DISTANCE</span>
+            <span>COLLISION PROB (Pc)</span>
+            <span>ACTION STATUS</span>
+          </div>
+          <div style="border-top: 1px solid var(--border); padding-top: 12px; display: flex; flex-direction: column; gap: 10px;">
+            <div style="display: flex; justify-content: space-between; color: #fca5a5;">
+              <span>AURORA-7 vs DEB-4182</span>
+              <span>284 meters</span>
+              <span>2.4 x 10^-3</span>
+              <span>MANEUVER REQUIRED</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; color: #fde68a;">
+              <span>AURORA-7 vs DEB-7750</span>
+              <span>842 meters</span>
+              <span>4.1 x 10^-4</span>
+              <span>ACTIVE MONITORING</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; color: #94a3b8;">
+              <span>AURORA-7 vs DEB-5576</span>
+              <span>610 meters</span>
+              <span>8.9 x 10^-5</span>
+              <span>WATCHLIST</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- VIEW 4: DEBRIS CATALOG -->
+    <section id="catalogView" class="page-view" style="display: none;">
+      <div class="panel" style="padding: 24px;">
+        <h2 style="font-size: 18px; margin-bottom: 8px;">Space Debris Catalog</h2>
+        <p style="color: var(--muted-foreground); margin-bottom: 20px;">High-accuracy radar observations and orbital parameter archives.</p>
+        <div style="overflow-x: auto;">
+          <table style="width: 100%; border-collapse: collapse; font-family: var(--font-mono); font-size: 12px;">
+            <thead>
+              <tr style="border-bottom: 1px solid var(--border); text-align: left; color: var(--muted-foreground);">
+                <th style="padding: 8px;">OBJECT ID</th>
+                <th style="padding: 8px;">CLASSIFICATION</th>
+                <th style="padding: 8px;">ALTITUDE</th>
+                <th style="padding: 8px;">INCLINATION</th>
+                <th style="padding: 8px;">RADAR CROSS SECTION</th>
+                <th style="padding: 8px;">ORIGIN</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                <td style="padding: 8px; color: var(--primary);">DEB-7750</td>
+                <td style="padding: 8px;">Rocket body fragment</td>
+                <td style="padding: 8px;">562 km</td>
+                <td style="padding: 8px;">98.1°</td>
+                <td style="padding: 8px;">0.8 m²</td>
+                <td style="padding: 8px;">Upper Stage Breakup</td>
+              </tr>
+              <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                <td style="padding: 8px; color: #ef4444;">DEB-4182</td>
+                <td style="padding: 8px;">Payload fragment</td>
+                <td style="padding: 8px;">548 km</td>
+                <td style="padding: 8px;">97.4°</td>
+                <td style="padding: 8px;">1.4 m²</td>
+                <td style="padding: 8px;">Decommissioned Satellite</td>
+              </tr>
+              <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                <td style="padding: 8px; color: var(--primary);">DEB-0931</td>
+                <td style="padding: 8px;">Unclassified fragment</td>
+                <td style="padding: 8px;">591 km</td>
+                <td style="padding: 8px;">96.5°</td>
+                <td style="padding: 8px;">0.3 m²</td>
+                <td style="padding: 8px;">Unknown Orbital Anomaly</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- VIEW 5: AI RISK ASSESSMENT -->
+    <section id="riskView" class="page-view" style="display: none;">
+      <div class="panel" style="padding: 24px;">
+        <h2 style="font-size: 18px; margin-bottom: 8px;">AI Risk Assessment &amp; Neural Priority</h2>
+        <p style="color: var(--muted-foreground); margin-bottom: 20px;">Explainable machine learning risk weights balancing miss distance, covariance uncertainty, and reaction window.</p>
+        <div class="cards-grid">
+          <div class="scenario-card">
+            <div class="card-id">DISTANCE FACTOR</div>
+            <div style="font-size: 20px; font-weight: 700; color: #ef4444; margin: 6px 0;">42% Weight</div>
+            <div style="font-size: 11px; color: var(--muted-foreground);">High penalty for intrusions &lt; 500 m.</div>
+          </div>
+          <div class="scenario-card">
+            <div class="card-id">TCA WINDOW FACTOR</div>
+            <div style="font-size: 20px; font-weight: 700; color: #f59e0b; margin: 6px 0;">31% Weight</div>
+            <div style="font-size: 11px; color: var(--muted-foreground);">Urgency score peaks at TCA &lt; 2 hours.</div>
+          </div>
+          <div class="scenario-card">
+            <div class="card-id">UNCERTAINTY COVARIANCE</div>
+            <div style="font-size: 20px; font-weight: 700; color: var(--primary); margin: 6px 0;">27% Weight</div>
+            <div style="font-size: 11px; color: var(--muted-foreground);">Tracking station observations confidence metric.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- VIEW 6: MANEUVER PLANNER -->
+    <section id="plannerView" class="page-view" style="display: none;">
+      <div class="panel" style="padding: 24px;">
+        <h2 style="font-size: 18px; margin-bottom: 8px;">Interactive Collision Avoidance Maneuver Planner</h2>
+        <p style="color: var(--muted-foreground); margin-bottom: 20px;">Simulate thruster burn vectors, calculate propellant budgets, and evaluate clearance safety margins.</p>
+        <div style="background: rgba(0,0,0,0.3); border: 1px solid var(--border); border-radius: 8px; padding: 20px;">
+          <div style="margin-bottom: 16px;">
+            <label style="font-weight: 600; display: block; margin-bottom: 6px;">Delta-V Magnitude (m/s)</label>
+            <input type="range" min="0.2" max="3.0" step="0.1" value="1.2" style="width: 100%; accent-color: var(--primary);">
+            <div style="display: flex; justify-content: space-between; font-family: var(--font-mono); font-size: 11px; margin-top: 4px; color: var(--muted-foreground);">
+              <span>0.2 m/s (Micro-burn)</span>
+              <span>1.2 m/s (Recommended)</span>
+              <span>3.0 m/s (Maximum)</span>
+            </div>
+          </div>
+          <div style="font-family: var(--font-mono); font-size: 12px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 20px;">
+            <div>Estimated Fuel Expenditure: <strong style="color: #fff;">1.4% Propellant</strong></div>
+            <div>Post-Maneuver Clearance: <strong style="color: #34d399;">+4.5 km Safety Radius</strong></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- VIEW 7: MISSION REPORT -->
+    <section id="reportView" class="page-view" style="display: none;">
+      <div class="panel" style="padding: 24px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+          <h2 style="font-size: 18px;">Mission Incident &amp; Assessment Report</h2>
+          <button class="sim-btn" onclick="window.print()">🖨 Print / Export PDF</button>
+        </div>
+        <div style="background: rgba(0,0,0,0.4); border: 1px solid var(--border); border-radius: 8px; padding: 24px; font-family: var(--font-mono); font-size: 12px; line-height: 1.8;">
+          <div style="border-bottom: 1px solid var(--border); padding-bottom: 12px; margin-bottom: 12px;">
+            <strong>ORBITSHIELD MISSION CONJUNCTION REPORT</strong><br>
+            OPERATIONAL ASSESSMENT: DEBRIS AVOIDANCE SUPPORT<br>
+            TIMESTAMP: 2026-10-05T09:25:00 UTC
+          </div>
+          <div>
+            Target Asset: AURORA-7 (LEO SSO 550 km)<br>
+            Primary Hazard: DEB-7750 / DEB-4182<br>
+            Minimum Miss Distance: 842 m (Predicted at TCA)<br>
+            Safety Status: AI Recommended Avoidance Burn (+1.2 m/s Along-Track)<br>
+            Authorization: Pending Flight Operations Review
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Toast Notification Container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Simulation Engine & Application Scripts -->
+  <script src="assets/orbit-simulation.js"></script>
+  <script src="assets/app.js"></script>
+</body>
+</html>
